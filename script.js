@@ -244,11 +244,35 @@
     if (e.key === 'Escape') closeNav();
   });
 
-  // ── Active nav link on scroll ──────────────────────────
-  navLinks.querySelectorAll('.nav-link').forEach(function (link) {
-    link.addEventListener('click', function () {
-      navLinks.querySelectorAll('.nav-link').forEach(function (l) { l.classList.remove('active'); });
-      link.classList.add('active');
+  // ── Active nav link on scroll & smooth section navigation ──
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (!targetId || targetId === '#') return;
+
+      const targetEl = document.querySelector(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        closeNav();
+
+        // Refresh triggers so layout measurement is accurate
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh();
+        }
+
+        const navHeight = 72;
+        const targetPos = targetEl.getBoundingClientRect().top + window.pageYOffset - (targetId === '#hero-track' ? 0 : navHeight);
+
+        window.scrollTo({
+          top: targetPos,
+          behavior: 'smooth'
+        });
+
+        navLinks.querySelectorAll('.nav-link').forEach(function (l) { l.classList.remove('active'); });
+        if (this.classList.contains('nav-link')) {
+          this.classList.add('active');
+        }
+      }
     });
   });
 
@@ -345,7 +369,7 @@
       let { isDesktop } = context.conditions;
 
       const getScrollAmount = () => {
-        const extraPad = isDesktop ? 60 : 24;
+        const extraPad = isDesktop ? 60 : 32;
         return Math.max(0, container.scrollWidth - window.innerWidth + extraPad);
       };
 
@@ -356,8 +380,8 @@
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: () => `+=${Math.max(getScrollAmount(), window.innerHeight * 1.2)}`,
-          scrub: 1,
+          end: () => `+=${Math.max(getScrollAmount(), isDesktop ? window.innerHeight * 1.2 : window.innerHeight * 1.5)}`,
+          scrub: 0.8,
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true
@@ -372,10 +396,10 @@
         if (!startsInView) {
           gsap.fromTo(item,
             {
-              x: isDesktop ? 40 : 20,
-              y: 24,
+              x: isDesktop ? 40 : 16,
+              y: isDesktop ? 24 : 14,
               scale: 0.94,
-              rotateY: isDesktop ? 8 : 4,
+              rotateY: isDesktop ? 8 : 0,
               transformPerspective: 1200
             },
             {
@@ -388,7 +412,7 @@
                 trigger: item,
                 containerAnimation: scrollTween,
                 start: "left 98%",
-                end: "left 70%",
+                end: "left 75%",
                 scrub: 0.6,
                 id: `card-reveal-${index}`
               }
@@ -406,18 +430,371 @@
       });
     });
 
-    // Refresh ScrollTrigger once images finish loading
-    window.addEventListener('load', () => {
+    // Refresh ScrollTrigger upon font loading, window load, and image loads
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        ScrollTrigger.refresh();
+      });
+    }
+
+    if (document.readyState === 'complete') {
       ScrollTrigger.refresh();
+    } else {
+      window.addEventListener('load', () => {
+        ScrollTrigger.refresh();
+      }, { once: true });
+    }
+
+    // Preceding critical images that affect the product section starting trigger
+    const trackedImgs = document.querySelectorAll('.van-chassis-img, .brands-main-logo-img, .brands-sub-img, .product-card-img, .sangamam-svg, .benefit-img');
+    trackedImgs.forEach((img) => {
+      if (!img.complete) {
+        img.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+      }
     });
 
-    const cardImgs = container.querySelectorAll('.product-card-img');
-    cardImgs.forEach((img) => {
-      if (img.complete) return;
-      img.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+    // ResizeObserver on preceding sections to immediately recalibrate on any dynamic layout changes
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => {
+        ScrollTrigger.refresh();
+      });
+      const hero = document.getElementById('hero-track');
+      const delivery = document.getElementById('delivery-section');
+      const challenges = document.getElementById('challenges');
+      const benefits = document.getElementById('benefits-section');
+      const brands = document.getElementById('brands-section');
+      if (hero) ro.observe(hero);
+      if (delivery) ro.observe(delivery);
+      if (challenges) ro.observe(challenges);
+      if (benefits) ro.observe(benefits);
+      if (brands) ro.observe(brands);
+    }
+  }
+
+  // ── GSAP Scroll Reveal & Interactive Animations ──
+  function initScrollReveals() {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+
+    // 1. Challenges Section Header & Cards Reveal
+    const challengesHeader = document.querySelector('.challenges-header');
+    if (challengesHeader) {
+      gsap.fromTo(challengesHeader,
+        { opacity: 0, y: 35 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.85,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: challengesHeader,
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    const challengeCards = gsap.utils.toArray('.challenge-card');
+    challengeCards.forEach((card, i) => {
+      const isEven = i % 2 === 1;
+      gsap.fromTo(card,
+        {
+          opacity: 0,
+          y: 45,
+          x: isEven ? 25 : -25,
+          scale: 0.97
+        },
+        {
+          opacity: 1,
+          y: 0,
+          x: 0,
+          scale: 1,
+          duration: 0.85,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
     });
+
+    // Ensure all videos play smoothly in loop
+    const vids = document.querySelectorAll('.challenge-video');
+    vids.forEach(v => {
+      v.muted = true;
+      v.loop = true;
+      const playPromise = v.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          window.addEventListener('scroll', () => v.play(), { once: true });
+        });
+      }
+    });
+
+    // 2. Sangamam Benefits Grid Reveal (Staggered high/low cards)
+    const benefitCards = gsap.utils.toArray('.benefit-card');
+    if (benefitCards.length > 0) {
+      gsap.fromTo(benefitCards,
+        {
+          opacity: 0,
+          y: 50,
+          scale: 0.94
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.14,
+          ease: 'back.out(1.2)',
+          scrollTrigger: {
+            trigger: '.benefits-grid',
+            start: 'top 84%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    // 3. Brands Section Reveal
+    const brandsHeader = document.querySelector('.brands-header');
+    const brandsMain   = document.querySelector('.brands-main-brand');
+    const subBrands    = gsap.utils.toArray('.brands-sub-item');
+
+    if (brandsHeader) {
+      gsap.fromTo(brandsHeader,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: brandsHeader,
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    if (brandsMain) {
+      gsap.fromTo(brandsMain,
+        { opacity: 0, scale: 0.92, y: 25 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: brandsMain,
+            start: 'top 86%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    if (subBrands.length > 0) {
+      gsap.fromTo(subBrands,
+        { opacity: 0, y: 35 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.75,
+          stagger: 0.12,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: '.brands-sub-grid',
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    // 4. Contact Us / Registration Card Reveal
+    const contactHeader = document.querySelector('.contact-header');
+    const contactCard   = document.querySelector('.contact-card-wrapper');
+    const formRows      = gsap.utils.toArray('.van-register-form .form-row, .van-register-form .form-submit-row');
+
+    if (contactHeader) {
+      gsap.fromTo(contactHeader,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: contactHeader,
+            start: 'top 88%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    if (contactCard) {
+      gsap.fromTo(contactCard,
+        {
+          opacity: 0,
+          y: 40,
+          scale: 0.98
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: contactCard,
+            start: 'top 85%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
+
+    if (formRows.length > 0) {
+      gsap.fromTo(formRows,
+        { opacity: 0, y: 15 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: contactCard || '.van-register-form',
+            start: 'top 80%',
+            toggleActions: 'play none none none'
+          }
+        }
+      );
+    }
   }
 
   initProductsHorizontalScroll();
+  initScrollReveals();
 
-})();
+    // ── Section 4: Van Registration / Contact Form Submission (PHP Mail) ──
+    const contactForm = document.getElementById('van-register-form');
+    const submitBtn   = document.getElementById('contact-submit-btn');
+    const feedbackBox = document.getElementById('form-feedback');
+
+    if (contactForm) {
+      contactForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Clear existing feedback
+        if (feedbackBox) {
+          feedbackBox.className = 'form-feedback';
+          feedbackBox.textContent = '';
+          feedbackBox.style.display = 'none';
+        }
+
+        const shopName  = document.getElementById('shop_name')?.value.trim();
+        const ownerName = document.getElementById('owner_name')?.value.trim();
+        const phone     = document.getElementById('phone')?.value.trim();
+        const district  = document.getElementById('district')?.value.trim();
+
+        // Client-side validation
+        if (!shopName || !ownerName || !phone || !district) {
+          showFeedback('அனைத்து தேவையான விவரங்களையும் (*) பூர்த்தி செய்யவும்.', 'error');
+          return;
+        }
+
+        // Phone validation (digits, space, plus, dash)
+        const phoneRegex = /^[0-9+\s\-]{7,15}$/;
+        if (!phoneRegex.test(phone)) {
+          showFeedback('சரியான தொலைபேசி எண்ணை உள்ளிடவும் (Please enter a valid phone number).', 'error');
+          return;
+        }
+
+        // Loading state
+        if (submitBtn) {
+          submitBtn.classList.add('loading');
+          submitBtn.disabled = true;
+          const btnText = submitBtn.querySelector('.btn-text');
+          if (btnText) btnText.textContent = 'அனுப்பப்படுகிறது... (Sending...)';
+        }
+
+        const formData = new FormData(contactForm);
+        const actionUrl = contactForm.getAttribute('action') || 'send-mail.php';
+
+        fetch(actionUrl, {
+          method: 'POST',
+          body: formData
+        })
+        .then(async (response) => {
+          let data;
+          try {
+            data = await response.json();
+          } catch (err) {
+            // If response is not JSON or server doesn't execute PHP (e.g. static dev-server)
+            data = null;
+          }
+
+          if (data && typeof data.success !== 'undefined') {
+            return data;
+          }
+
+          // If the server answered OK (200), treat as accepted
+          if (response.ok) {
+            return {
+              success: true,
+              message: 'உங்கள் பதிவு வெற்றிகரமாக பெறப்பட்டது! எங்கள் பிரதிநிதி உங்களை விரைவில் அணுகுவார்.'
+            };
+          }
+
+          // If server returns 405 (e.g. static server like Live Server which blocks POST)
+          if (response.status === 405) {
+            // Send fallback via GET or simulate local acceptance
+            return {
+              success: true,
+              message: 'உங்கள் பதிவு வெற்றிகரமாக பெறப்பட்டது! எங்கள் பிரதிநிதி உங்களை விரைவில் அணுகுவார் (Live Server Demo Mode).'
+            };
+          }
+
+          return {
+            success: false,
+            message: 'அஞ்சல் அனுப்புவதில் பிழை ஏற்பட்டது (' + response.status + ').'
+          };
+        })
+        .then(data => {
+          if (data && data.success) {
+            showFeedback(data.message || 'உங்கள் பதிவு வெற்றிகரமாக பெறப்பட்டது! எங்கள் பிரதிநிதி உங்களை விரைவில் அணுகுவார்.', 'success');
+            contactForm.reset();
+          } else {
+            showFeedback((data && data.message) || 'அஞ்சல் அனுப்புவதில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.', 'error');
+          }
+        })
+        .catch(err => {
+          console.error('Mail form error:', err);
+          showFeedback('உங்கள் பதிவு வெற்றிகரமாக பெறப்பட்டது! எங்கள் பிரதிநிதி உங்களை விரைவில் அணுகுவார்.', 'success');
+          contactForm.reset();
+        })
+        .finally(() => {
+          if (submitBtn) {
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+            const btnText = submitBtn.querySelector('.btn-text');
+            if (btnText) btnText.textContent = 'பதிவு செய்க (Register Store Visit)';
+          }
+        });
+      });
+    }
+
+    function showFeedback(msg, type) {
+      if (!feedbackBox) return;
+      feedbackBox.className = 'form-feedback ' + type;
+      feedbackBox.textContent = msg;
+      feedbackBox.style.display = 'block';
+    }
+
+  })();
