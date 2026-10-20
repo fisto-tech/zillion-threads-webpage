@@ -1477,6 +1477,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   display: flex;
   align-items: center;
   padding-top: 24px;
+  cursor: pointer;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform, opacity;
 }
@@ -1637,6 +1638,39 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   .challenge-num {
     font-size: 2.2rem;
   }
+}
+
+/* ================================================================
+   FULL-WIDTH AUTOPLAY VIDEO SECTION (AFTER SAVALGAL SECTION)
+   ================================================================ */
+.banner-video-section {
+  position: relative;
+  width: 100%;
+  background: #FAF4E5;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  line-height: 0;
+  display: block;
+}
+
+.banner-video-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  line-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-video-player {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+  border: none;
+  outline: none;
 }
 
 /* ================================================================

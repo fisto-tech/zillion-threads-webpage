@@ -573,30 +573,32 @@
         }
       });
 
-      // 2. Individual Card Reveal effect
+      // 2. Individual Card Reveal effect on horizontal scroll
       items.forEach((item, index) => {
         const startsInView = index === 0 || (isDesktop && (index === 1 || index === 2));
 
         if (!startsInView) {
           gsap.fromTo(item,
             {
-              x: isDesktop ? 40 : 20,
-              y: isDesktop ? 24 : 12,
-              scale: 0.95,
-              rotateY: isDesktop ? 8 : 0,
+              x: isDesktop ? 40 : 25,
+              y: isDesktop ? 24 : 16,
+              scale: isDesktop ? 0.95 : 0.92,
+              opacity: isDesktop ? 0.4 : 0.3,
+              rotateY: isDesktop ? 8 : 4,
               transformPerspective: 1200
             },
             {
               x: 0,
               y: 0,
               scale: 1,
+              opacity: 1,
               rotateY: 0,
               ease: "power2.out",
               scrollTrigger: {
                 trigger: item,
                 containerAnimation: scrollTween,
-                start: "left 98%",
-                end: "left 75%",
+                start: isDesktop ? "left 98%" : "left 96%",
+                end: isDesktop ? "left 75%" : "left 65%",
                 scrub: 0.6,
                 id: `card-reveal-${index}`
               }
@@ -619,53 +621,126 @@
   function initPreProductsReveals() {
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
-    // 1. Challenges Section Header & Cards Reveal
-    const challengesHeader = document.querySelector('.challenges-header');
-    if (challengesHeader) {
-      gsap.fromTo(challengesHeader,
-        { opacity: 0, y: 35 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: challengesHeader,
-            start: 'top 90%',
-            toggleActions: 'play reverse play reverse'
-          }
+    // ── Clean & Cool Headings Reveal Animation (All Section Headings) ──
+    const sectionHeaders = [
+      { trigger: '.challenges-header', title: '.challenges-title', subtitle: '.challenges-subtitle', once: false },
+      { trigger: '.brands-header',     title: '.brands-title',     subtitle: '.brands-subtitle',     once: false },
+      { trigger: '.products-header',   title: '.products-title',   subtitle: '.products-subtitle',   once: true, start: 'top 95%' },
+      { trigger: '.contact-header',    title: '.contact-title',    subtitle: '.contact-subtitle',    once: false }
+    ];
+
+    sectionHeaders.forEach(headerGroup => {
+      const triggerEl = document.querySelector(headerGroup.trigger);
+      if (!triggerEl) return;
+
+      const titleEl = triggerEl.querySelector(headerGroup.title);
+      const subtitleEl = triggerEl.querySelector(headerGroup.subtitle);
+
+      // Create coordinated timeline for title & subtitle
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: triggerEl,
+          start: headerGroup.start || 'top 88%',
+          end: headerGroup.once ? undefined : 'bottom 10%',
+          toggleActions: headerGroup.once ? 'play none none none' : 'play reverse play reverse',
+          once: !!headerGroup.once
         }
-      );
-    }
+      });
+
+      if (titleEl) {
+        tl.fromTo(titleEl,
+          {
+            opacity: 0,
+            y: 42,
+            scale: 0.96,
+            filter: 'blur(4px)'
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: 'blur(0px)',
+            duration: 0.85,
+            ease: 'power3.out'
+          }
+        );
+      }
+
+      if (subtitleEl) {
+        tl.fromTo(subtitleEl,
+          {
+            opacity: 0,
+            y: 24,
+            filter: 'blur(3px)'
+          },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 0.75,
+            ease: 'power2.out'
+          },
+          '-=0.55' // Smooth stagger overlap
+        );
+      }
+    });
 
     const challengeCards = gsap.utils.toArray('.challenge-card');
     challengeCards.forEach((card, i) => {
+      const isMobile = window.innerWidth <= 768;
       const isEven = i % 2 === 1;
+
       gsap.fromTo(card,
         {
           opacity: 0,
-          y: 40,
-          x: isEven ? 20 : -20,
-          scale: 0.98
+          y: isMobile ? 36 : 40,
+          x: isMobile ? (isEven ? 16 : -16) : (isEven ? 24 : -24),
+          scale: 0.96
         },
         {
           opacity: 1,
           y: 0,
           x: 0,
           scale: 1,
-          duration: 0.75,
+          duration: isMobile ? 0.65 : 0.75,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: card,
-            start: 'top 88%',
+            start: isMobile ? 'top 92%' : 'top 88%',
+            end: 'bottom 8%',
             toggleActions: 'play reverse play reverse'
           }
         }
       );
     });
 
-    // Ensure all challenge videos play smoothly in loop
-    const vids = document.querySelectorAll('.challenge-video');
+    // 1.1 Full-Width Video Banner Reveal with bidirectional reverse animation
+    const bannerVideo = document.querySelector('.banner-video-section');
+    if (bannerVideo) {
+      gsap.fromTo(bannerVideo,
+        {
+          opacity: 0,
+          scale: 0.94,
+          y: 35
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.85,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: bannerVideo,
+            start: 'top 90%',
+            end: 'bottom 10%',
+            toggleActions: 'play reverse play reverse'
+          }
+        }
+      );
+    }
+
+    // Ensure all challenge videos and banner video play smoothly in loop
+    const vids = document.querySelectorAll('.challenge-video, .banner-video-player');
     vids.forEach(v => {
       v.muted = true;
       v.loop = true;
@@ -673,6 +748,104 @@
       if (playPromise !== undefined) {
         playPromise.catch(() => {
           window.addEventListener('scroll', () => v.play(), { once: true });
+          window.addEventListener('touchstart', () => v.play(), { once: true });
+        });
+      }
+    });
+
+    // ── Savalgal (Challenges) Audio on Hover (Desktop) & Touch/Click (Mobile) ──
+    const challengeAudioUrls = {
+      '1': 'assets/audios/sence-1.mp3',
+      '2': 'assets/audios/sence-2.mp3',
+      '3': 'assets/audios/sence-3.mp3',
+      '4': 'assets/audios/sence-4.mp3',
+      '5': 'assets/audios/sence-5.mp3',
+      '6': 'assets/audios/sence-6.mp3'
+    };
+
+    const challengeAudioPool = {};
+    let currentPlayingAudio = null;
+
+    // Pre-create and preload audio instances
+    Object.keys(challengeAudioUrls).forEach(id => {
+      const audio = new Audio(challengeAudioUrls[id]);
+      audio.preload = 'auto';
+      challengeAudioPool[id] = audio;
+    });
+
+    function playChallengeAudio(challengeId) {
+      const id = String(challengeId).trim();
+      const url = challengeAudioUrls[id];
+      if (!url) return;
+
+      // Stop currently playing audio immediately
+      if (currentPlayingAudio) {
+        try {
+          currentPlayingAudio.pause();
+          currentPlayingAudio.currentTime = 0;
+        } catch (e) {}
+      }
+
+      // Reuse or recreate Audio instance to bypass any browser stalled/error state
+      let audio = challengeAudioPool[id];
+      if (!audio || audio.error) {
+        audio = new Audio(url);
+        challengeAudioPool[id] = audio;
+      }
+
+      try {
+        audio.currentTime = 0;
+      } catch (e) {}
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            currentPlayingAudio = audio;
+          })
+          .catch(() => {
+            // If browser blocked play() on mouseenter (due to lack of user gesture),
+            // prepare it for first user interaction (touch or click)
+            const unlock = () => {
+              audio.play().catch(() => {});
+              window.removeEventListener('click', unlock);
+              window.removeEventListener('touchstart', unlock);
+            };
+            window.addEventListener('click', unlock, { once: true });
+            window.addEventListener('touchstart', unlock, { once: true });
+          });
+      }
+    }
+
+    const cards = document.querySelectorAll('.challenge-card');
+    cards.forEach(card => {
+      const cId = card.getAttribute('data-challenge');
+      if (!cId) return;
+
+      // Desktop: hover
+      card.addEventListener('mouseenter', () => {
+        playChallengeAudio(cId);
+      });
+
+      // Mobile & Desktop: click or pointerdown for immediate gesture authorization
+      card.addEventListener('click', () => {
+        playChallengeAudio(cId);
+      });
+
+      // Target children explicitly (video wrapper, text box) in case of event capture quirks
+      const videoWrap = card.querySelector('.challenge-video-wrap');
+      const textWrap = card.querySelector('.challenge-content-wrap');
+
+      if (videoWrap) {
+        videoWrap.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playChallengeAudio(cId);
+        });
+      }
+      if (textWrap) {
+        textWrap.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playChallengeAudio(cId);
         });
       }
     });
@@ -703,26 +876,8 @@
     }
 
     // 3. Brands Section Reveal
-    const brandsHeader = document.querySelector('.brands-header');
     const brandsMain   = document.querySelector('.brands-main-brand');
     const subBrands    = gsap.utils.toArray('.brands-sub-item');
-
-    if (brandsHeader) {
-      gsap.fromTo(brandsHeader,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.75,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: brandsHeader,
-            start: 'top 88%',
-            toggleActions: 'play reverse play reverse'
-          }
-        }
-      );
-    }
 
     if (brandsMain) {
       gsap.fromTo(brandsMain,
@@ -765,26 +920,8 @@
   function initPostProductsReveals() {
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
-    const contactHeader = document.querySelector('.contact-header');
     const contactCard   = document.querySelector('.contact-card-wrapper');
     const formRows      = gsap.utils.toArray('.van-register-form .form-row, .van-register-form .form-submit-row');
-
-    if (contactHeader) {
-      gsap.fromTo(contactHeader,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.75,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: contactHeader,
-            start: 'top 88%',
-            toggleActions: 'play reverse play reverse'
-          }
-        }
-      );
-    }
 
     if (contactCard) {
       gsap.fromTo(contactCard,
