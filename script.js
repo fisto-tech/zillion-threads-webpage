@@ -75,48 +75,152 @@
     renderFrame(Math.round(currentFrame));
   }
 
-  // Preloader with keyframe priority
+  // ── Preloader & Full Assets Loading Manager ──────────
+  const preloaderOverlay = document.getElementById('preloader-overlay');
+  const preloaderCounter = document.getElementById('preloader-counter');
+  const preloaderBar     = document.getElementById('preloader-bar');
+  let currentLoadPercent = 0;
+  let targetLoadPercent  = 0;
+  let preloaderFinished  = false;
+
+  // Minimum duration: 4.8s to 5.2s as requested (4 to 6 sec window)
+  const MIN_PRELOADER_TIME = 4800;
+  const startTime = Date.now();
+
+  document.body.classList.add('preloader-active');
+
+  function updatePreloaderUI() {
+    if (preloaderFinished) return;
+
+    const elapsed = Date.now() - startTime;
+    // Calculate time-based progress smoothly from 1% to 100% over MIN_PRELOADER_TIME
+    const timeProgress = Math.min(100, Math.max(1, Math.round((elapsed / MIN_PRELOADER_TIME) * 100)));
+
+    // Blended target: smoothly moves with time and assets
+    let effectiveTarget = Math.max(timeProgress, targetLoadPercent);
+    if (elapsed < MIN_PRELOADER_TIME && effectiveTarget > 98) {
+      effectiveTarget = 98; // Hold at 98% until 4.8s is reached
+    }
+    if (elapsed >= MIN_PRELOADER_TIME) {
+      effectiveTarget = 100;
+    }
+
+    currentLoadPercent += (effectiveTarget - currentLoadPercent) * 0.10;
+    const rounded = Math.min(100, Math.round(currentLoadPercent));
+    if (preloaderCounter) preloaderCounter.textContent = rounded + '%';
+    if (preloaderBar) preloaderBar.style.width = rounded + '%';
+
+    // Finish only when MIN_PRELOADER_TIME has passed and 100% is reached
+    if (elapsed >= MIN_PRELOADER_TIME && rounded >= 99) {
+      preloaderFinished = true;
+      if (preloaderCounter) preloaderCounter.textContent = '100%';
+      if (preloaderBar) preloaderBar.style.width = '100%';
+
+      setTimeout(() => {
+        if (preloaderOverlay) {
+          preloaderOverlay.classList.add('preloader-done');
+        }
+        document.body.classList.remove('preloader-active');
+
+        // Freshly draw canvas frame 1 and refresh triggers
+        resizeHeroCanvas();
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh();
+        }
+
+        // Animate hero content smoothly on enter
+        if (heroContent) {
+          heroContent.style.transition = 'opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)';
+          heroContent.style.opacity = '1';
+        }
+      }, 450);
+      return;
+    }
+    requestAnimationFrame(updatePreloaderUI);
+  }
+  requestAnimationFrame(updatePreloaderUI);
+
+  // Preloader with balanced asset tracking that keeps CPU & SVG animation buttery smooth
   function initFrameLoader() {
-    if (!heroCanvas) return;
+    const assetsToLoad = [];
 
-    // Load first frame immediately
-    const firstImg = new Image();
-    firstImg.src = getFrameUrl(1);
-    firstImg.onload = function () {
-      frames[1] = firstImg;
-      isCanvasReady = true;
-      resizeHeroCanvas();
-    };
-
-    // Queue keyframes every 8 frames first, then remainder
-    const keyframes = [];
-    for (let i = 1; i <= TOTAL_FRAMES; i += 8) {
-      if (i !== 1) keyframes.push(i);
-    }
-    const remaining = [];
-    for (let i = 2; i <= TOTAL_FRAMES; i++) {
-      if ((i - 1) % 8 !== 0) remaining.push(i);
+    // Track hero video frames during the 4-6s window
+    for (let f = 1; f <= TOTAL_FRAMES; f++) {
+      assetsToLoad.push({ type: 'hero-frame', src: getFrameUrl(f), frameIdx: f });
     }
 
-    const queue = keyframes.concat(remaining);
+    // Key page images & brand assets
+    const staticImgs = [
+      'assets/logo.svg',
+      'assets/sangamam-text.svg',
+      'assets/van-image.webp',
+      'assets/benefit-1.webp',
+      'assets/benefit-2.webp',
+      'assets/benefit-3.webp',
+      'assets/benefit-4.webp',
+      'assets/color-logo.svg',
+      'assets/yarika-raw.png',
+      'assets/mittoys-raw.png',
+      'assets/magarasi-dark.png',
+      'assets/products/image-1.png',
+      'assets/products/image-2.png',
+      'assets/products/image-3.png',
+      'assets/products/image-4.png',
+      'assets/products/image-5.png',
+      'assets/products/image-6.png',
+      'assets/products/image-7.png',
+      'assets/tire-wheel.png'
+    ];
+    staticImgs.forEach(src => assetsToLoad.push({ type: 'img', src }));
+
+    const totalTracked = assetsToLoad.length + 1; // +1 for fonts
+    let loadedCount = 0;
+
+    function onItemLoaded() {
+      loadedCount++;
+      targetLoadPercent = Math.min(100, Math.round((loadedCount / totalTracked) * 100));
+    }
+
+    // Font ready check
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(onItemLoaded).catch(onItemLoaded);
+    } else {
+      onItemLoaded();
+    }
+
+    // Controlled throughput: 4 parallel loads with setTimeout pacing so SMIL & main thread run at 60fps
     let activeLoads = 0;
-    const MAX_CONCURRENT = 6;
+    const MAX_CONCURRENT_LOADS = 4;
 
-    function loadNext() {
-      while (activeLoads < MAX_CONCURRENT && queue.length > 0) {
-        const nextIdx = queue.shift();
+    function loadQueue() {
+      while (activeLoads < MAX_CONCURRENT_LOADS && assetsToLoad.length > 0) {
+        const item = assetsToLoad.shift();
         activeLoads++;
         const img = new Image();
-        img.src = getFrameUrl(nextIdx);
+        img.src = item.src;
         img.onload = img.onerror = function () {
-          frames[nextIdx] = img;
+          if (item.type === 'hero-frame') {
+            frames[item.frameIdx] = img;
+            if (item.frameIdx === 1) {
+              isCanvasReady = true;
+              resizeHeroCanvas();
+            }
+          }
           activeLoads--;
-          loadNext();
+          onItemLoaded();
+          // Yield main thread so animations render with zero stutter
+          setTimeout(loadQueue, 8);
         };
       }
     }
 
-    loadNext();
+    // Begin queue after a brief moment to allow SVG animation to start immediately without initial hitch
+    setTimeout(loadQueue, 50);
+
+    // Absolute fallback: within 5.5s, allow transition even on slow connections
+    setTimeout(() => {
+      targetLoadPercent = 100;
+    }, 5500);
   }
 
   // Animation loop with LERP smoothing for video playback
@@ -178,15 +282,17 @@
     if (deliverySection && vanActor) {
       const vRect        = deliverySection.getBoundingClientRect();
       const winH         = window.innerHeight;
-      const startTrigger = winH * 1.05;
-      const endTrigger   = -winH * 0.45;
+      // Start driving when delivery section approaches screen, finish as it scrolls past
+      const startTrigger = winH * 0.95;
+      const endTrigger   = -deliverySection.offsetHeight * 0.2;
       const rawProgress  = (startTrigger - vRect.top) / (startTrigger - endTrigger);
       const vProgress    = Math.min(Math.max(rawProgress, 0), 1);
 
       // Calculate horizontal translation across viewport
-      const vanWidth = vanActor.offsetWidth || 340;
-      const startX   = window.innerWidth < 768 ? 16 : 36;
-      const endX     = Math.max(startX, window.innerWidth - vanWidth - (window.innerWidth < 768 ? 16 : 36));
+      const vanWidth = vanActor.offsetWidth || 260;
+      const pad      = window.innerWidth < 480 ? 12 : (window.innerWidth < 768 ? 16 : 36);
+      const startX   = pad;
+      const endX     = Math.max(startX + 40, window.innerWidth - vanWidth - pad);
       const currentX = startX + vProgress * (endX - startX);
 
       vanActor.style.transform = 'translate3d(' + currentX + 'px, 0, 0)';
@@ -206,10 +312,67 @@
         frontWheel.setAttribute('transform', 'translate(1046, 416) rotate(' + wheelAngle + ')');
       }
     }
+
+    // 4. ScrollSpy: Highlight active nav link based on section in view
+    const sections = [
+      { id: 'contact', el: document.getElementById('contact') },
+      { id: 'products-section', el: document.getElementById('products-section') },
+      { id: 'brands-section', el: document.getElementById('brands-section') },
+      { id: 'benefits-section', el: document.getElementById('benefits-section') },
+      { id: 'challenges', el: document.getElementById('challenges') },
+      { id: 'hero-track', el: document.getElementById('hero-track') }
+    ];
+
+    const scrollCheckPos = y + 160;
+    let activeSectionId = 'hero-track';
+
+    for (let i = 0; i < sections.length; i++) {
+      const item = sections[i];
+      if (item.el) {
+        // If element is wrapped in a pin-spacer, check pin-spacer position
+        const testEl = item.el.closest('.pin-spacer') || item.el;
+        const top = testEl.offsetTop;
+        if (scrollCheckPos >= top) {
+          activeSectionId = item.id;
+          break;
+        }
+      }
+    }
+
+    navLinks.querySelectorAll('.nav-link').forEach(function (l) {
+      const href = l.getAttribute('href');
+      if (href === '#' + activeSectionId) {
+        l.classList.add('active');
+      } else {
+        l.classList.remove('active');
+      }
+    });
+
+    // 5. Back to Top Button visibility (shows when scrolled down past 400px)
+    const backToTopBtn = document.getElementById('back-to-top-btn');
+    if (backToTopBtn) {
+      if (y > 400) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    }
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
   onScroll();
+
+  // ── Back to Top Button Click Handler ───────────────────
+  const backToTopBtn = document.getElementById('back-to-top-btn');
+  if (backToTopBtn) {
+    backToTopBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
 
   // ── Mobile Nav ─────────────────────────────────────────
   function openNav() {
@@ -244,7 +407,7 @@
     if (e.key === 'Escape') closeNav();
   });
 
-  // ── Active nav link on scroll & smooth section navigation ──
+  // ── Active nav link on scroll & smooth section navigation (Header + Footer quick links) ──
   document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
     anchor.addEventListener('click', function (e) {
       const targetId = this.getAttribute('href');
@@ -260,18 +423,24 @@
           ScrollTrigger.refresh();
         }
 
-        const navHeight = 72;
-        const targetPos = targetEl.getBoundingClientRect().top + window.pageYOffset - (targetId === '#hero-track' ? 0 : navHeight);
+        const navHeight = window.innerWidth <= 640 ? 60 : (window.innerWidth <= 1024 ? 66 : 72);
+        // If pinned, scroll to pin-spacer top
+        const scrollTarget = targetEl.closest('.pin-spacer') || targetEl;
+        const targetPos = scrollTarget.getBoundingClientRect().top + window.pageYOffset - (targetId === '#hero-track' ? 0 : navHeight);
 
         window.scrollTo({
           top: targetPos,
           behavior: 'smooth'
         });
 
-        navLinks.querySelectorAll('.nav-link').forEach(function (l) { l.classList.remove('active'); });
-        if (this.classList.contains('nav-link')) {
-          this.classList.add('active');
-        }
+        // Immediately highlight matching nav links
+        navLinks.querySelectorAll('.nav-link').forEach(function (l) {
+          if (l.getAttribute('href') === targetId) {
+            l.classList.add('active');
+          } else {
+            l.classList.remove('active');
+          }
+        });
       }
     });
   });
@@ -350,6 +519,13 @@
   });
 
   // ── Section 3: Product Categories GSAP Horizontal Scroll & Card Reveal (Ref Code) ──
+  // ── GSAP ScrollTrigger Global Configuration ─────────────
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.config({ ignoreMobileResize: true });
+    ScrollTrigger.normalizeScroll(false);
+  }
+
+  // ── Section 3: Product Categories GSAP Horizontal Scroll & Card Reveal ──
   function initProductsHorizontalScroll() {
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
@@ -369,36 +545,37 @@
       let { isDesktop } = context.conditions;
 
       const getScrollAmount = () => {
-        const extraPad = isDesktop ? 60 : 32;
+        const extraPad = isDesktop ? 60 : 28;
         return Math.max(0, container.scrollWidth - window.innerWidth + extraPad);
       };
 
-      // 1. Move the container to the left with pin & scrub
+      // 1. Move the container horizontally with pin & scrub in strict DOM order
       const scrollTween = gsap.to(container, {
         x: () => -getScrollAmount(),
         ease: "none",
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: () => `+=${Math.max(getScrollAmount(), isDesktop ? window.innerHeight * 1.2 : window.innerHeight * 1.5)}`,
-          scrub: 0.8,
+          end: () => `+=${Math.max(getScrollAmount(), isDesktop ? window.innerHeight * 1.2 : window.innerHeight * 1.35)}`,
+          scrub: 1,
           pin: true,
+          pinSpacing: true,
           anticipatePin: 1,
-          invalidateOnRefresh: true
+          invalidateOnRefresh: true,
+          refreshPriority: 1
         }
       });
 
-      // 2. Individual Card 3D Reveal effect with 100% visible text
+      // 2. Individual Card Reveal effect
       items.forEach((item, index) => {
-        // Initial cards visible in viewport on arrival are always 100% visible
         const startsInView = index === 0 || (isDesktop && (index === 1 || index === 2));
 
         if (!startsInView) {
           gsap.fromTo(item,
             {
-              x: isDesktop ? 40 : 16,
-              y: isDesktop ? 24 : 14,
-              scale: 0.94,
+              x: isDesktop ? 40 : 20,
+              y: isDesktop ? 24 : 12,
+              scale: 0.95,
               rotateY: isDesktop ? 8 : 0,
               transformPerspective: 1200
             },
@@ -429,50 +606,10 @@
         }
       });
     });
-
-    // Refresh ScrollTrigger upon font loading, window load, and image loads
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
-      });
-    }
-
-    if (document.readyState === 'complete') {
-      ScrollTrigger.refresh();
-    } else {
-      window.addEventListener('load', () => {
-        ScrollTrigger.refresh();
-      }, { once: true });
-    }
-
-    // Preceding critical images that affect the product section starting trigger
-    const trackedImgs = document.querySelectorAll('.van-chassis-img, .brands-main-logo-img, .brands-sub-img, .product-card-img, .sangamam-svg, .benefit-img');
-    trackedImgs.forEach((img) => {
-      if (!img.complete) {
-        img.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
-      }
-    });
-
-    // ResizeObserver on preceding sections to immediately recalibrate on any dynamic layout changes
-    if (typeof ResizeObserver !== 'undefined') {
-      const ro = new ResizeObserver(() => {
-        ScrollTrigger.refresh();
-      });
-      const hero = document.getElementById('hero-track');
-      const delivery = document.getElementById('delivery-section');
-      const challenges = document.getElementById('challenges');
-      const benefits = document.getElementById('benefits-section');
-      const brands = document.getElementById('brands-section');
-      if (hero) ro.observe(hero);
-      if (delivery) ro.observe(delivery);
-      if (challenges) ro.observe(challenges);
-      if (benefits) ro.observe(benefits);
-      if (brands) ro.observe(brands);
-    }
   }
 
-  // ── GSAP Scroll Reveal & Interactive Animations ──
-  function initScrollReveals() {
+  // ── Pre-Products Reveals (Challenges, Benefits, Brands in DOM order) ──
+  function initPreProductsReveals() {
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
     // 1. Challenges Section Header & Cards Reveal
@@ -483,12 +620,12 @@
         {
           opacity: 1,
           y: 0,
-          duration: 0.85,
+          duration: 0.8,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: challengesHeader,
-            start: 'top 88%',
-            toggleActions: 'play none none none'
+            start: 'top 90%',
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -500,27 +637,27 @@
       gsap.fromTo(card,
         {
           opacity: 0,
-          y: 45,
-          x: isEven ? 25 : -25,
-          scale: 0.97
+          y: 40,
+          x: isEven ? 20 : -20,
+          scale: 0.98
         },
         {
           opacity: 1,
           y: 0,
           x: 0,
           scale: 1,
-          duration: 0.85,
+          duration: 0.75,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: card,
             start: 'top 88%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
     });
 
-    // Ensure all videos play smoothly in loop
+    // Ensure all challenge videos play smoothly in loop
     const vids = document.querySelectorAll('.challenge-video');
     vids.forEach(v => {
       v.muted = true;
@@ -539,20 +676,20 @@
       gsap.fromTo(benefitCards,
         {
           opacity: 0,
-          y: 50,
-          scale: 0.94
+          y: 45,
+          scale: 0.95
         },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.8,
-          stagger: 0.14,
+          duration: 0.75,
+          stagger: 0.12,
           ease: 'back.out(1.2)',
           scrollTrigger: {
             trigger: '.benefits-grid',
-            start: 'top 84%',
-            toggleActions: 'play none none none'
+            start: 'top 86%',
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -569,12 +706,12 @@
         {
           opacity: 1,
           y: 0,
-          duration: 0.8,
+          duration: 0.75,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: brandsHeader,
             start: 'top 88%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -587,12 +724,12 @@
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.9,
+          duration: 0.85,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: brandsMain,
             start: 'top 86%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -600,23 +737,27 @@
 
     if (subBrands.length > 0) {
       gsap.fromTo(subBrands,
-        { opacity: 0, y: 35 },
+        { opacity: 0, y: 30 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.75,
-          stagger: 0.12,
+          duration: 0.7,
+          stagger: 0.1,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: '.brands-sub-grid',
             start: 'top 88%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
     }
+  }
 
-    // 4. Contact Us / Registration Card Reveal
+  // ── Post-Products Reveals (Contact section & form created after products pin) ──
+  function initPostProductsReveals() {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+
     const contactHeader = document.querySelector('.contact-header');
     const contactCard   = document.querySelector('.contact-card-wrapper');
     const formRows      = gsap.utils.toArray('.van-register-form .form-row, .van-register-form .form-submit-row');
@@ -627,12 +768,12 @@
         {
           opacity: 1,
           y: 0,
-          duration: 0.8,
+          duration: 0.75,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: contactHeader,
             start: 'top 88%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -649,12 +790,12 @@
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.9,
+          duration: 0.85,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: contactCard,
-            start: 'top 85%',
-            toggleActions: 'play none none none'
+            start: 'top 86%',
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
@@ -666,21 +807,86 @@
         {
           opacity: 1,
           y: 0,
-          duration: 0.6,
-          stagger: 0.08,
+          duration: 0.55,
+          stagger: 0.07,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: contactCard || '.van-register-form',
             start: 'top 80%',
-            toggleActions: 'play none none none'
+            toggleActions: 'play reverse play reverse'
+          }
+        }
+      );
+    }
+
+    // 5. Footer Reveal with reverse support
+    const footerCols = gsap.utils.toArray('.footer-col');
+    if (footerCols.length > 0) {
+      gsap.fromTo(footerCols,
+        { opacity: 0, y: 25 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.75,
+          stagger: 0.1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: '.footer-main',
+            start: 'top 92%',
+            toggleActions: 'play reverse play reverse'
           }
         }
       );
     }
   }
 
-  initProductsHorizontalScroll();
-  initScrollReveals();
+  // Initialize ALL triggers strictly in DOM order
+  initPreProductsReveals();      // 1. Challenges, Benefits, Brands
+  initProductsHorizontalScroll(); // 2. Product Categories Horizontal Pin
+  initPostProductsReveals();     // 3. Contact Us & Form
+
+  // Consolidated, single refresh when all assets and fonts are ready
+  function performConsolidatedRefresh() {
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh();
+    }
+  }
+
+  if (document.readyState === 'complete') {
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(performConsolidatedRefresh);
+    } else {
+      performConsolidatedRefresh();
+    }
+  } else {
+    window.addEventListener('load', () => {
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(performConsolidatedRefresh);
+      } else {
+        performConsolidatedRefresh();
+      }
+    }, { once: true });
+  }
+
+  // Debounced refresh strictly on width-only resize / orientationchange
+  let lastWindowWidth = window.innerWidth;
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth !== lastWindowWidth) {
+      lastWindowWidth = window.innerWidth;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        performConsolidatedRefresh();
+      }, 250);
+    }
+  }, { passive: true });
+
+  window.addEventListener('orientationchange', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      performConsolidatedRefresh();
+    }, 250);
+  }, { passive: true });
 
     // ── Section 4: Van Registration / Contact Form Submission (PHP Mail) ──
     const contactForm = document.getElementById('van-register-form');

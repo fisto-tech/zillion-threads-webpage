@@ -5,13 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZillionThreads – சங்கமம் | உங்கள் நேர்த்தியான ஆடை அங்காடி</title>
   <meta name="description" content="சில்லறை வியாபாரிகளின் தேவைகளுக்கு ஏற்ப செயல்படும் ஒரு புதிய முயற்சியே சங்கமம். ஒவ்வொரு மாதமும் புதிய ஆடைகளை உங்கள் கடைக்கு நேரடியாக வந்து சேர்க்கிறோம்." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="icon" href="./assets/logo.svg" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Preloader Screen with Interactive Infinite Animation & Asset Counter -->
+  <div class="preloader-overlay" id="preloader-overlay">
+    <div class="c-wrap">
+      <div class="preloader-anim-wrap">
+        <!-- Preloader Brand Logo -->
+        <div class="preloader-logo-wrap">
+          <img src="assets/logo.svg" alt="ZillionThreads Logo" class="preloader-logo-img" width="180" height="48" />
+        </div>
+
+        <svg class="preloader-svg" width="260" height="145" viewBox="0 115 344 185" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+            <path id="infinite" d="M169.695 216.229C217.089 164.558 241.969 144.454 268.809 145C306.897 145 337.777 175.934 337.809 214.014C337.773 252.092 306.895 283.001 268.809 283.001C244.334 283.499 225.557 270.817 186.5 229.382C183.002 225.671 172.342 214.086 168.5 209.902C164.629 205.69 160.94 201.727 157.416 198C118.38 156.726 99.4583 144.517 75 145.014C36.9197 145.014 6.04431 175.93 6 214C6.05783 252.058 36.928 282.987 75 282.987C101.893 283.533 122.092 268.169 169.695 216.229Z" stroke-width="2"/>
+          </defs>
+
+          <!-- Infinite Background Outline -->
+          <use id="infinite-background" href="#infinite" xlink:href="#infinite" stroke="rgba(255, 255, 255, 0.22)" stroke-width="2.5" />
+
+          <!-- Snake Body along infinity loop directly on path for guaranteed instant animation -->
+          <path id="snake-body-path" d="M169.695 216.229C217.089 164.558 241.969 144.454 268.809 145C306.897 145 337.777 175.934 337.809 214.014C337.773 252.092 306.895 283.001 268.809 283.001C244.334 283.499 225.557 270.817 186.5 229.382C183.002 225.671 172.342 214.086 168.5 209.902C164.629 205.69 160.94 201.727 157.416 198C118.38 156.726 99.4583 144.517 75 145.014C36.9197 145.014 6.04431 175.93 6 214C6.05783 252.058 36.928 282.987 75 282.987C101.893 283.533 122.092 268.169 169.695 216.229Z"
+                stroke="#F5C518" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="150 773.1340942382812" stroke-dashoffset="-150">
+            <animate 
+                     attributeName="stroke-dashoffset"
+                     values="1055.1340942382812; 980; 945; 900; 865; 825; 755; 745; 655; 565; 495; 450; 415; 360; 310; 240; 150; 130" 
+                     keyTimes="0; 0.0684; 0.1368; 0.2052; 0.2736; 0.342; 0.4104; 0.4275; 0.4788; 0.5472; 0.6156; 0.684; 0.7524; 0.8208; 0.8892; 0.9576; 0.9876; 1" 
+                     calcMode="linear"
+                     dur="1.465s"
+                     begin="0s"
+                     restart="always"
+                     repeatCount="indefinite"/>
+          </path>
+
+          <!-- Snake Head Circle along infinity loop -->
+          <g id="snake-head">
+            <animateMotion
+                           keyPoints="0.025; 0.105; 0.145; 0.192; 0.231; 0.275; 0.35; 0.363; 0.46; 0.557; 0.632; 0.678; 0.717; 0.777; 0.83; 0.907; 1; 0; 0.025;" 
+                           keyTimes="0; 0.0684; 0.1368; 0.2052; 0.2736; 0.342; 0.4104; 0.4275; 0.4788; 0.5472; 0.6156; 0.684; 0.7524; 0.8208; 0.8892; 0.9576; 0.9876; 0.9876; 1" 
+                           calcMode="linear"
+                           dur="1.465s"
+                           begin="0s"
+                           restart="always"
+                           repeatCount="indefinite"  
+                           rotate="auto">
+              <mpath href="#infinite" xlink:href="#infinite"/>
+            </animateMotion>
+            <circle r="7.5" fill="#F5C518"/>
+          </g>
+        </svg>
+
+        <!-- Loading Count & Progress Bar -->
+        <div class="preloader-info">
+          <div class="preloader-counter" id="preloader-counter">0%</div>
+          <div class="preloader-progress-track">
+            <div class="preloader-progress-bar" id="preloader-bar"></div>
+          </div>
+          <p class="preloader-text">இணைப்புகள் தயாராகின்றன...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="#" class="nav-logo" id="nav-logo">
@@ -23,9 +82,10 @@
       <ul class="nav-links" id="nav-links">
         <li><a href="#hero-track" class="nav-link active">முகப்பு</a></li>
         <li><a href="#challenges" class="nav-link">சவால்கள்</a></li>
-        <li><a href="#benefits-section" class="nav-link">சங்கமம் திட்டம்</a></li>
+        <li><a href="#benefits-section" class="nav-link">திட்டம்</a></li>
         <li><a href="#brands-section" class="nav-link">பிராண்டுகள்</a></li>
-        <li><a href="#contact" class="nav-link">தொடர்புக்கு</a></li>
+        <li><a href="#products-section" class="nav-link">தயாரிப்புகள்</a></li>
+        <li><a href="#contact" class="nav-link">தொடர்பு</a></li>
         <li class="mobile-cta-li">
           <a href="#contact" class="nav-cta mobile-cta">
             <span class="btn-icon">
@@ -64,7 +124,7 @@
           சில்லறை வியாபாரிகளின் தேவைகளுக்கு ஏற்ப செயல்படும் ஒரு புதிய முயற்சியே சங்கமம். ஒவ்வொரு மாதமும் புதிய ஆடைகளுடன் உங்கள் கடைக்கு நேரடியாக வந்து சேர்கிறோம்.
         </p>
         <div class="hero-actions" id="hero-actions">
-          <a href="#" class="btn btn-primary" id="btn-shop">
+          <a href="#contact" class="btn btn-primary" id="btn-shop">
             <svg class="btn-calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -73,7 +133,7 @@
             </svg>
             கடை வருகைக்குப் முன்பதிவு
           </a>
-          <a href="#" class="btn btn-secondary" id="btn-contact">
+          <a href="#contact" class="btn btn-secondary" id="btn-contact">
             வணிகத் தொடர்புக்கு
           </a>
         </div>
@@ -249,7 +309,7 @@
             </span>
           </div>
           <div class="benefit-image-frame">
-            <img src="assets/benefit-1.webp" alt="வணிகத்தைத் தாண்டிய உறவு" class="benefit-img" loading="lazy" />
+            <img src="assets/benefit-1.webp" alt="வணிகத்தைத் தாண்டிய உறவு" class="benefit-img" width="600" height="690" />
             <div class="benefit-overlay-fade">
               <h3 class="benefit-title">வணிகத்தைத் தாண்டிய உறவு</h3>
             </div>
@@ -271,7 +331,7 @@
             </span>
           </div>
           <div class="benefit-image-frame">
-            <img src="assets/benefit-2.webp" alt="மாதம் தோறும் புதிய கலெக்ஷன்கள்" class="benefit-img" loading="lazy" />
+            <img src="assets/benefit-2.webp" alt="மாதம் தோறும் புதிய கலெக்ஷன்கள்" class="benefit-img" width="600" height="690" />
             <div class="benefit-overlay-fade">
               <h3 class="benefit-title">மாதம் தோறும் புதிய கலெக்ஷன்கள்</h3>
             </div>
@@ -292,7 +352,7 @@
             </span>
           </div>
           <div class="benefit-image-frame">
-            <img src="assets/benefit-3.webp" alt="டிஜிட்டல் ஆதரவு" class="benefit-img" loading="lazy" />
+            <img src="assets/benefit-3.webp" alt="டிஜிட்டல் ஆதரவு" class="benefit-img" width="600" height="690" />
             <div class="benefit-overlay-fade">
               <h3 class="benefit-title">டிஜிட்டல் ஆதரவு</h3>
             </div>
@@ -313,7 +373,7 @@
             </span>
           </div>
           <div class="benefit-image-frame">
-            <img src="assets/benefit-4.webp" alt="தெளிவான விலை நிர்ணயம்" class="benefit-img" loading="lazy" />
+            <img src="assets/benefit-4.webp" alt="தெளிவான விலை நிர்ணயம்" class="benefit-img" width="600" height="690" />
             <div class="benefit-overlay-fade">
               <h3 class="benefit-title">தெளிவான விலை நிர்ணயம்</h3>
             </div>
@@ -581,8 +641,8 @@
                 <div class="input-container">
                   <span class="input-icon" aria-hidden="true">
                     <!-- famicons:call-outline -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32">
-                      <path d="M451 374c-15.88-16-54.34-39.35-73-48.76c-24.3-12.24-26.3-13.24-45.4.95c-12.74 9.47-21.21 17.93-36.12 14.47s-47.52-30.56-70.64-53.68s-50.2-55.71-53.66-70.63s5-23.38 14.47-36.12c14.2-19.1 13.2-21.1.95-45.4c-9.4-18.68-32.77-57.13-48.78-73C124.46 48.06 113.73 48 104 48c-44.59 0-72 37.42-72 83c0 101.42 81.67 217.47 167.3 303.09S383.67 464 431 464c45.58 0 83-27.41 83-72c0-9.73-.06-20.46-63-18z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32">
+                      <path d="M451 374c-15.88-16-54.34-39.35-73-48.76c-24.3-12.24-26.3-13.24-45.4.95c-12.74 9.47-21.21 17.93-36.12 14.75s-47.31-21.11-75.68-49.39s-47.34-61.62-50.53-76.48s5.41-23.23 14.79-36c13.22-18 12.22-21 .92-45.3c-8.81-18.9-32.84-57-48.9-72.8C119.9 44 119.9 47 108.83 51.6A160 160 0 0 0 83 65.37C67 76 58.12 84.83 51.91 98.1s-9 44.38 23.07 102.64s54.57 88.05 101.14 134.49S258.5 406.64 310.85 436c64.76 36.27 89.6 29.2 102.91 23s22.18-15 32.83-31a159 159 0 0 0 13.8-25.8C465 391.17 468 391.17 451 374Z"/>
                     </svg>
                   </span>
                   <input 
@@ -603,9 +663,10 @@
                 </label>
                 <div class="input-container">
                   <span class="input-icon" aria-hidden="true">
-                    <!-- boxicons:location -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C7.589 2 4 5.589 4 9.995 3.971 16.44 11.696 21.784 12 22c0 0 8.029-5.56 8-12.005C20 5.589 16.411 2 12 2zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                    <!-- boxicons:location (bx-map-pin) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C7.589 2 4 5.589 4 9.995 4 16.17 11.63 21.76 11.954 22c.03.023.062.035.094.035s.063-.012.093-.035C12.37 21.76 20 16.17 20 9.995 20 5.589 16.411 2 12 2zm0 18.396C10.279 19.141 6 15.05 6 9.995 6 6.688 8.693 4 12 4s6 2.688 6 5.995c0 5.055-4.279 9.146-6 8.401z"/>
+                      <circle cx="12" cy="10" r="3"/>
                     </svg>
                   </span>
                   <input 
@@ -630,9 +691,9 @@
                 <div class="input-container select-container">
                   <span class="input-icon" aria-hidden="true">
                     <!-- energy-icons:shirt-48-bold -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M30 4H18l-4 6-8 5 4 8 6-3v24h24V20l6 3 4-8-8-5-4-6z"/>
-                      <path d="M18 4c0 3.314 2.686 6 6 6s6-2.686 6-6"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M32 6H16l-5 8-5 5 5 7 5-3v19h24V23l5 3 5-7-5-5-5-8z"/>
+                      <path d="M18 6c0 3.3 2.7 6 6 6s6-2.7 6-6"/>
                     </svg>
                   </span>
                   <select id="category" name="category" class="form-input form-select">
@@ -706,12 +767,12 @@
           <h3 class="footer-heading">விரைவு இணைப்புகள்</h3>
           <span class="footer-heading-line"></span>
           <ul class="footer-links-list">
-            <li><a href="#">முகப்பு</a></li>
-            <li><a href="#">எங்கள் பிராண்டுகள்</a></li>
-            <li><a href="#">தயாரிப்புகள்</a></li>
-            <li><a href="#">சங்கமம்</a></li>
-            <li><a href="#">எங்களைப் பற்றி</a></li>
-            <li><a href="#">தொடர்பு</a></li>
+            <li><a href="#hero-track">முகப்பு</a></li>
+            <li><a href="#challenges">சவால்கள்</a></li>
+            <li><a href="#benefits-section">திட்டம்</a></li>
+            <li><a href="#brands-section">பிராண்டுகள்</a></li>
+            <li><a href="#products-section">தயாரிப்புகள்</a></li>
+            <li><a href="#contact">தொடர்பு</a></li>
           </ul>
         </div>
 
@@ -738,7 +799,7 @@
           <span class="footer-heading-line"></span>
           <div class="footer-contact-items">
             <!-- Location: boxicons:location-filled -->
-            <div class="footer-contact-item">
+            <a href="https://www.google.com/maps/place/Zillion+Threads/@11.011062,76.865269,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba85f912d3d1dd9:0xdfd0242d8a996267!8m2!3d11.011062!4d76.865269!16s%2Fg%2F11ybt6v8jq?entry=ttu" target="_blank" rel="noopener noreferrer" class="footer-contact-item footer-location-link" title="Open Zillion Threads on Google Maps">
               <span class="footer-contact-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 2C7.589 2 4 5.589 4 9.995 3.971 16.44 11.696 21.784 12 22c0 0 8.029-5.56 8-12.005C20 5.589 16.411 2 12 2zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
@@ -749,7 +810,7 @@
                 Vadavalli to Thondamuthur Road,<br />
                 Coimbatore, Tamil Nadu – 641109.
               </p>
-            </div>
+            </a>
 
             <!-- Phone: famicons:call -->
             <div class="footer-contact-item">
@@ -782,26 +843,32 @@
           <div class="footer-social-wrapper">
             <p class="footer-social-title">எங்களைப் பின்தொடருங்கள்</p>
             <div class="footer-social-links">
-              <!-- ri:facebook-fill -->
-              <a href="#" class="footer-social-btn" aria-label="Facebook">
+              <!-- Facebook -->
+              <a href="https://www.facebook.com/people/Zillion-Threads/61566242636875/" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Facebook">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.52-.14-2.73-.14-2.85 0-4.77 1.74-4.77 4.9v2.6H7v4h3v9h4v-9z"/>
                 </svg>
               </a>
-              <!-- akar-icons:instagram-fill -->
-              <a href="#" class="footer-social-btn" aria-label="Instagram">
+              <!-- Instagram -->
+              <a href="https://www.instagram.com/zillion_threads/" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Instagram">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
               </a>
-              <!-- ant-design:youtube-filled -->
-              <a href="#" class="footer-social-btn" aria-label="YouTube">
+              <!-- YouTube -->
+              <a href="https://www.youtube.com/@zillionthreads-m9x?si=D26TKsCEJd_rNkoY" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="YouTube">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
               </a>
-              <!-- stash:social-whatsapp -->
-              <a href="#" class="footer-social-btn" aria-label="WhatsApp">
+              <!-- LinkedIn -->
+              <a href="https://www.linkedin.com/authwall?trk=bf&trkInfo=AQEYWjVI_JEOKAAAAaFYMzeQffbirWYWFhVvGsIQ1f0LLE1roZ1Pt-pDQcB07kXy4kXWRHxfmDv1v5LGbJ0Mqi25zksOCuW6G0t9P6oHFUAzo0fBAUjE7pXediJMNzp4BGPbA6M=&original_referer=&sessionRedirect=https%3A%2F%2Fwww.linkedin.com%2Fcompany%2Fzillion-threads" target="_blank" rel="noopener noreferrer" class="footer-social-btn footer-social-linkedin" aria-label="LinkedIn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+              </a>
+              <!-- WhatsApp -->
+              <a href="https://wa.me/919944941919" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="WhatsApp">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm5.8 14.15c-.24.67-1.39 1.28-1.93 1.35-.49.07-1.12.1-3.23-.77-2.69-1.11-4.42-3.83-4.55-4.01-.13-.18-1.08-1.44-1.08-2.75 0-1.31.69-1.95.93-2.22.24-.27.53-.34.71-.34.18 0 .36 0 .51.01.16.01.38-.06.59.45.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.27.45-.13.16-.29.35-.41.47-.13.13-.27.27-.12.53.16.27.69 1.13 1.48 1.83 1.02.91 1.88 1.19 2.15 1.32.27.13.42.11.58-.07.16-.18.67-.78.85-1.04.18-.27.36-.22.6-.13.24.09 1.54.73 1.81.86.27.13.44.2.51.31.07.11.07.65-.17 1.32z"/>
                 </svg>
@@ -823,8 +890,8 @@
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
             </span>
-            <a href="https://www.zillionsangamam.com" target="_blank" rel="noopener noreferrer">www.zillionsangamam.com</a>
-            <span class="footer-pipe">|</span>
+            <!-- <a href="https://www.zillionsangamam.com" target="_blank" rel="noopener noreferrer">www.zillionsangamam.com</a>
+            <span class="footer-pipe">|</span> -->
             <a href="https://www.zillionthreads.com" target="_blank" rel="noopener noreferrer">www.zillionthreads.com</a>
             <span class="footer-pipe">|</span>
             <a href="https://www.yarika.in" target="_blank" rel="noopener noreferrer">www.yarika.in</a>
@@ -839,6 +906,13 @@
       </div>
     </div>
   </footer>
+
+  <!-- Back to Top Floating Button -->
+  <button class="back-to-top-btn" id="back-to-top-btn" aria-label="மேலே செல்ல (Back to Top)" title="மேலே செல்ல">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
 
   <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
