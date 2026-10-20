@@ -117,12 +117,17 @@
       if (preloaderBar) preloaderBar.style.width = '100%';
 
       setTimeout(() => {
+        // Ensure page is pinned exactly at the top hero section
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
         if (preloaderOverlay) {
           preloaderOverlay.classList.add('preloader-done');
         }
         document.body.classList.remove('preloader-active');
 
         // Freshly draw canvas frame 1 and refresh triggers
+        currentFrame = 1;
+        targetFrame = 1;
         resizeHeroCanvas();
         if (typeof ScrollTrigger !== 'undefined') {
           ScrollTrigger.refresh();
@@ -132,12 +137,14 @@
         if (heroContent) {
           heroContent.style.transition = 'opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)';
           heroContent.style.opacity = '1';
+          heroContent.style.transform = 'translateY(0) scale(1)';
         }
       }, 450);
       return;
     }
     requestAnimationFrame(updatePreloaderUI);
   }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   requestAnimationFrame(updatePreloaderUI);
 
   // Preloader with balanced asset tracking that keeps CPU & SVG animation buttery smooth
@@ -214,8 +221,8 @@
       }
     }
 
-    // Begin queue after a brief moment to allow SVG animation to start immediately without initial hitch
-    setTimeout(loadQueue, 50);
+    // Begin queue after a 250ms window to allow SVG animation to start immediately without any initial hitch
+    setTimeout(loadQueue, 250);
 
     // Absolute fallback: within 5.5s, allow transition even on slow connections
     setTimeout(() => {

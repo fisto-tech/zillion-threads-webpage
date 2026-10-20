@@ -8,7 +8,7 @@
   <link rel="icon" href="./assets/logo.svg" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
   <!-- Preloader Screen with Interactive Infinite Animation & Asset Counter -->
@@ -70,6 +70,37 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // Force browser to reset scroll to top on every refresh
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    // Immediately unpause SMIL and trigger SVG animation on first render pass
+    (function() {
+      try {
+        document.body.classList.add('preloader-active');
+        window.scrollTo(0, 0);
+        var svg = document.querySelector('.preloader-svg');
+        if (svg) {
+          if (typeof svg.unpauseAnimations === 'function') {
+            svg.unpauseAnimations();
+          }
+          if (typeof svg.setCurrentTime === 'function') {
+            svg.setCurrentTime(0);
+          }
+          var anims = svg.querySelectorAll('animate, animateMotion');
+          anims.forEach(function(anim) {
+            if (typeof anim.beginElement === 'function') {
+              try { anim.beginElement(); } catch(e) {}
+            }
+          });
+        }
+      } catch (err) {}
+    })();
+  </script>
 
   <nav class="navbar" id="navbar">
     <div class="nav-container">
@@ -917,6 +948,6 @@
   <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="script.js?v=1"></script>
+  <script src="script.js?v=2"></script>
 </body>
 </html>
